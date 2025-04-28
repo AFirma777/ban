@@ -27,22 +27,13 @@ body {
     flex-direction: column;
 }
 .app h1 {
-<<<<<<< HEAD
-    margin: 1rem 0 .5rem 0;
-    font-size: 1rem;
-=======
     margin: 1rem 0;
     font-size: .8rem;
->>>>>>> c38f5081371493ff28a6ed7317d4b02681c07ac5
     color: white;
 }
 .containerGeral__form {
     width: 100%;
-<<<<<<< HEAD
-    padding: 0rem 1rem 1rem 1rem ;
-=======
     padding: 1rem;
->>>>>>> c38f5081371493ff28a6ed7317d4b02681c07ac5
     display: flex;
     justify-content: center;
     align-items: center;
