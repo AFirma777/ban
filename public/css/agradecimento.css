@@ -49,6 +49,7 @@ main{
     font-size: 1rem;
     font-weight: bold;
     color: white;
+    text-align: center;
 }
 
 @media (max-width: 768px) {
