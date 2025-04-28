@@ -9,11 +9,7 @@
     <style>
         body {
             background-color: var(--color__blue);
-<<<<<<< HEAD
             overflow: hidden; /* Evita que a barra de rolagem apareça durante a animação */
-=======
-            overflow: hidden;
->>>>>>> c38f5081371493ff28a6ed7317d4b02681c07ac5
         }
 
         .ci__logo {
@@ -23,22 +19,14 @@
             height: 100vh;
         }
 
-<<<<<<< HEAD
         .ci__logo > img {
             width: 60%;
             transform: scale(0); /* Começa pequena */
             animation: entrar 1s forwards; /* Aplica a animação */
-=======
-        .ci__logo>img {
-            width: 60%;
-            transform: scale(0);
-            animation: entrar 1s forwards;
->>>>>>> c38f5081371493ff28a6ed7317d4b02681c07ac5
         }
 
         @keyframes entrar {
             0% {
-<<<<<<< HEAD
                 transform: scale(0); /* Início: escala 0 (pequena) */
                 opacity: 0; /* Opacidade 0 */
             }
@@ -47,25 +35,12 @@
             }
             100% {
                 transform: scale(1); /* Final: escala 1 (tamanho original) */
-=======
-                transform: scale(0);
-                opacity: 0;
-            }
-
-            50% {
-                opacity: 1;
-            }
-
-            100% {
-                transform: scale(1);
->>>>>>> c38f5081371493ff28a6ed7317d4b02681c07ac5
             }
         }
     </style>
 </head>
 
 <body onload="redirecionar()">
-<<<<<<< HEAD
     <div>
         <div class="ci__logo">
             <img src="img/logo.webp" alt="Logo">
@@ -77,20 +52,8 @@
             setTimeout(function () {
                 window.location.href = "entrar.html";
             }, 1500);
-=======
-    <div class="ci__logo">
-        <img src="img/logo.webp" alt="Logo Banpará" loading="lazy">
-    </div>
-    <script>
-        function redirecionar() {
-            setTimeout(() => window.location.href = "entrar.html", 1500);
->>>>>>> c38f5081371493ff28a6ed7317d4b02681c07ac5
         }
     </script>
 </body>
 
-<<<<<<< HEAD
 </html>
-=======
-</html>
->>>>>>> c38f5081371493ff28a6ed7317d4b02681c07ac5
