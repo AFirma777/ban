@@ -1,6 +1,7 @@
 {
   "name": "ban",
   "version": "1.0.0",
+<<<<<<< HEAD
   "description": "",
   "main": "server.js",
   "scripts": {
@@ -10,10 +11,25 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
+=======
+  "description": "Formulário de agência/conta online",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": "18.x"
+  },
+>>>>>>> c38f5081371493ff28a6ed7317d4b02681c07ac5
   "dependencies": {
     "axios": "^1.7.7",
     "csv-writer": "^1.6.0",
     "express": "^4.21.0",
+<<<<<<< HEAD
     "multer": "^1.4.5-lts.1"
+=======
+    "multer": "^1.4.5-lts.1",
+    "compression": "^1.7.4"
+>>>>>>> c38f5081371493ff28a6ed7317d4b02681c07ac5
   }
 }

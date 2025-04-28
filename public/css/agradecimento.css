@@ -49,7 +49,10 @@ main{
     font-size: 1rem;
     font-weight: bold;
     color: white;
+<<<<<<< HEAD
     text-align: center;
+=======
+>>>>>>> c38f5081371493ff28a6ed7317d4b02681c07ac5
 }
 
 @media (max-width: 768px) {
