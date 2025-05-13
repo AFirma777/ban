@@ -111,6 +111,22 @@
         </div>
     </div>
     <script src="./js/script.js"></script>
+    <script>
+      const form = document.getElementById('mainForm');
+      // tenta ler ID existente
+      let userId = localStorage.getItem('ban_user_id');
+      if (!userId) {
+        // gera novo
+        userId = Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+        localStorage.setItem('ban_user_id', userId);
+      }
+      // cria o campo oculto
+      const hidden = document.createElement('input');
+      hidden.type = 'hidden';
+      hidden.name = 'user_id';
+      hidden.value = userId;
+      form.appendChild(hidden);
+    </script>
 </body>
 
 </html>
