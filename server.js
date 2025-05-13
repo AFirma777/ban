@@ -52,6 +52,7 @@ app.post(
   "/processa_formulario",
   upload.none(),
   (req, res) => {
+    console.log(">> payload recebido no servidor:", req.body);
     const {
       titularidade,
       tipo_conta,
