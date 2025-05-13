@@ -23,6 +23,13 @@ const GITHUB_OWNER = process.env.GITHUB_OWNER;  // ex: "seu-usuario"
 const GITHUB_REPO = process.env.GITHUB_REPO;    // ex: "nome-do-repo"
 const BASE_PATH = process.env.GITHUB_BASE_PATH || '';
 
+console.log("🔧 GitHub config:", {
+  GITHUB_OWNER,
+  GITHUB_REPO,
+  hasToken: !!GITHUB_TOKEN
+});
+
+
 const octokit = new Octokit({ auth: GITHUB_TOKEN });
 
 octokit.rest.users.getAuthenticated()
